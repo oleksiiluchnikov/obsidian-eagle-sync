@@ -1,8 +1,119 @@
-/*
+/* waterfall images */
+:root {
+	--eagle-gallery-gap: 0.1em;
+	--eagle-gallery-row-height: 200px;
+	--chekmate-color-light: white;
+	--chekmate-color-dark: grey;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+/* Status Bar */
+.status-bar-item.plugin-eagle-sync {
+	background-color: hsla(0, 50%, 50%, 0.5);
+}
 
-If your plugin does not need CSS, delete this file.
+.status-bar-item.plugin-eagle-sync.is-running {
+	background-color: hsla(200, 50%, 50%, 0.5);
+}
 
-*/
+.workspace-leaf-content .view-content:has(.eagle-gallery) {
+	display: flex;
+	flex-direction: column;
+	padding: 0 !important;
+	margin: auto;
+}
+
+.eagle-gallery {
+    display: flex;
+	align-self: flex-start;
+    flex-wrap: wrap; 
+    flex-direction: row;
+	justify-content: flex-start;
+    overflow: auto;
+	left: 0;
+}
+
+.eagle-gallery i {
+	display: block;
+	align-self: bottom;
+	width: 100%;
+}
+
+.eagle-gallery .img-container {
+	display: flex;
+	flex-direction: column;
+	/* min-width: 200px; */
+	margin: var(--eagle-gallery-gap);
+	position: relative;
+	overflow: hidden;
+	border-radius: 0.5em;
+	border: 1px solid black;
+}
+
+.eagle-gallery .img-container:hover {
+	/* Drop shadow on hover */
+	z-index: 1;
+}
+
+.eagle-gallery .img-container .file-name {
+	display: none;
+}
+
+.eagle-gallery .img-container:hover .file-name {
+	display: block;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	background: hsla(var(--anp-colorful-frame-color-hsl, var(--color-accent-hsl)), 0.8);
+	color: var(--text-muted);
+	font-size: 0.8em;
+	z-index: 1;
+}
+
+.eagle-gallery .img-container img:hover {
+	/* border inside */
+	transform: scale(1.2);
+	animation: transform 0.1s ease-in-out;
+	z-index: 1;
+}
+
+/* transition: transform 0.5s ease-in-out; */
+@keyframes transform {
+	0% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.1);
+	}
+	100% {
+		transform: scale(1.2);
+	}
+}
+
+.eagle-gallery .img-container img {
+    /* Adjust to your liking, perhaps remove absolute positioning and replace with max-width: 100%; */
+	display: flex;
+	flex-direction: column wrap;
+    max-width: 100%;
+    vertical-align: bottom;
+	/* width: 100%; */
+	margin: auto;
+	opacity: 1;
+}
+
+.eagle-gallery-metadata-container {
+	display: flex;
+	flex-wrap: wrap; 
+	flex-direction: row;
+	height: 50%;
+	color: hsla(0, 0%, 100%, 0.5);
+	overflow: auto;
+	align-content: flex-start; /* Make rows stick to the top */
+	font-size: 1em;
+	padding: 0.5em;
+}
+
+.img-metadata-title {
+	font-weight: bold;
+}
+
