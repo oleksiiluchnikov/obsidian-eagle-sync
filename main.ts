@@ -1,4 +1,4 @@
-import { Plugin, WorkspaceLeaf, Notice, TFile} from 'obsidian';
+import { Plugin, WorkspaceLeaf, TFile} from 'obsidian';
 import { ExampleView, EAGLE_SYNC_VIEW } from './view';
 import { EagleClient } from '@petamorikei/eagle-js';
 import { GetItemListResult } from '@petamorikei/eagle-js/dist/types';
@@ -14,7 +14,7 @@ const DEFAULT_SETTINGS: EagleSyncSettings = {
 const EAGLE_FOLDER_ID_REGEX = new RegExp('[A-Z0-9]{13}', 'g');
 export const EAGLE_CLIENT = EagleClient.instance;
 
-export type EagleFolderID = string; // UUID, e.g. A0B1C2D3E4F5G6H7
+export type EagleFolderID = string;
 export type EagleItemID = string; // UUID, e.g. A0B1C2D3E4F5G6H7
 export type Styles = {
     depth: number;
@@ -220,25 +220,29 @@ export default class EagleSync extends Plugin {
 
 	async activateView() {
 		this.app.workspace.detachLeavesOfType(EAGLE_SYNC_VIEW);
-		// const leaf = await this.app.workspace.getRightLeaf(false);
-		// if (!leaf) return;
-		// await leaf.setViewState({
-		// 	type: EAGLE_SYNC_VIEW,
-		// 	active: true,
-		// });
+		const rightLeaf: WorkspaceLeaf | null = this.app.workspace.getRightLeaf(false);
+		if (!rightLeaf) {
+			console.log('No right leaf found');
+			return;
+		}
+		await rightLeaf.setViewState({
+			type: EAGLE_SYNC_VIEW,
+			active: true,
+		});
+		this.app.workspace.revealLeaf(rightLeaf);
+		return;
+	}
 
-		const leaf = this.app.workspace.getLeavesOfType(EAGLE_SYNC_VIEW)[0];
+	async activateViewLeft() {
+		this.app.workspace.detachLeavesOfType(EAGLE_SYNC_VIEW);
+		const leaf: WorkspaceLeaf | null = this.app.workspace.getLeftLeaf(false);
 		if (!leaf) return;
 		await leaf.setViewState({
 			type: EAGLE_SYNC_VIEW,
 			active: true,
 		});
-		this.app.workspace.revealLeaf(
-			this.app.workspace.getLeavesOfType(EAGLE_SYNC_VIEW)[0]
-		);
-		this.app.workspace.revealLeaf(
-			this.app.workspace.getLeavesOfType(EAGLE_SYNC_VIEW)[0]
-		);
+		this.app.workspace.revealLeaf(leaf);
+		return;
 	}
 
 	async clearGallery() {
@@ -303,6 +307,13 @@ export default class EagleSync extends Plugin {
 			EAGLE_SYNC_VIEW,
 			(leaf) => new ExampleView(leaf)
 		);
+
+		// Add a ribbon icon to the left sidebar
+		this.addRibbonIcon('sync', 'Sync Eagle Folder', () => {
+			this.activateView();
+		});
+
+
 		this.activateView();
 		this.registerEvent(this.app.workspace.on('active-leaf-change', async () => {
 			await this.loadGallery();
