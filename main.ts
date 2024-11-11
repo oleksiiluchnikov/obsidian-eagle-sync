@@ -2,10 +2,20 @@ import { Plugin, WorkspaceLeaf, Notice, TFile} from 'obsidian';
 import { ExampleView, EAGLE_SYNC_VIEW } from './view';
 import { EagleClient } from '@petamorikei/eagle-js';
 import { GetItemListResult } from '@petamorikei/eagle-js/dist/types';
-import { getAPI } from 'obsidian-dataview';
+// import { getAPI } from 'obsidian-dataview';
 
-export type EagleFolderID = string;
-export type EagleItemID = string;
+const DEFAULT_SETTINGS: EagleSyncSettings = {
+	mySetting: 'default',
+	eagleAPIServerUrl: 'http://localhost:41595',
+	eagleAPIServerToken: '',
+	fieldEagleFolder: 'eagle_folder_id'
+}
+
+const EAGLE_FOLDER_ID_REGEX = new RegExp('[A-Z0-9]{13}', 'g');
+export const EAGLE_CLIENT = EagleClient.instance;
+
+export type EagleFolderID = string; // UUID, e.g. A0B1C2D3E4F5G6H7
+export type EagleItemID = string; // UUID, e.g. A0B1C2D3E4F5G6H7
 export type Styles = {
     depth: number;
     first: boolean;
@@ -16,7 +26,7 @@ export type EagleFolderInfoData = {
     id: EagleFolderID;
     name: string;
     description: string;
-    children: EagleFolderData[]; // assuming children are of the same type
+    children: EagleFolderInfoData[]; // assuming children are of the same type
     modificationTime: number;
     tags: string[];
     iconColor: string;
@@ -47,15 +57,6 @@ interface EagleSyncSettings {
 	fieldEagleFolder: string;
 }
 
-const DEFAULT_SETTINGS: EagleSyncSettings = {
-	mySetting: 'default',
-	eagleAPIServerUrl: 'http://localhost:41595',
-	eagleAPIServerToken: '',
-	fieldEagleFolder: 'eagle_folder'
-}
-
-const EAGLE_FOLDER_ID_REGEX = new RegExp('[A-Z0-9]{13}', 'g');
-export const EAGLE_CLIENT = EagleClient.instance;
 
 async function fetchValue(content: string, metadataKey: string, valueRegex: RegExp): Promise<string | null> {
 	const line = content.split('\n')
@@ -107,7 +108,7 @@ async function fetchItemsListFromFolder(foldersList: EagleFolderID[]): Promise<G
  * @param data - The data to search in.
  * @returns The matching folder, or null if no match was found.
  */
-function findFolder(folderID: EagleFolderID, data): any {
+function findFolder(folderID: EagleFolderID, data: any): any {
 	// if (!data || typeof data.id === 'undefined') {
 	// 	throw new Error("Invalid data provided");
 	// }
@@ -219,10 +220,22 @@ export default class EagleSync extends Plugin {
 
 	async activateView() {
 		this.app.workspace.detachLeavesOfType(EAGLE_SYNC_VIEW);
-		await this.app.workspace.getRightLeaf(false).setViewState({
+		// const leaf = await this.app.workspace.getRightLeaf(false);
+		// if (!leaf) return;
+		// await leaf.setViewState({
+		// 	type: EAGLE_SYNC_VIEW,
+		// 	active: true,
+		// });
+
+		const leaf = this.app.workspace.getLeavesOfType(EAGLE_SYNC_VIEW)[0];
+		if (!leaf) return;
+		await leaf.setViewState({
 			type: EAGLE_SYNC_VIEW,
 			active: true,
 		});
+		this.app.workspace.revealLeaf(
+			this.app.workspace.getLeavesOfType(EAGLE_SYNC_VIEW)[0]
+		);
 		this.app.workspace.revealLeaf(
 			this.app.workspace.getLeavesOfType(EAGLE_SYNC_VIEW)[0]
 		);
@@ -238,7 +251,7 @@ export default class EagleSync extends Plugin {
 	}
 
 	async loadGallery() {
-		const metadataKey = 'eagle_folder';
+		const metadataKey = 'eagle_folder_id';
 		const activePage = this.app.workspace.getActiveFile();
 		if (activePage === null) return;
 		this.app.vault.cachedRead(activePage)
